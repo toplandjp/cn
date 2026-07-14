@@ -35,7 +35,7 @@
             <div class="w-full bg-[#09090b] h-2.5 rounded-full overflow-hidden border border-gray-800 shadow-inner">
                 <div id="shipping-progress-bar" class="bg-gradient-to-r from-violet-500 to-fuchsia-500 h-full w-0 transition-all duration-700 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
             </div>
-            <p class="text-[10px] font-bold text-gray-500 text-right">※10,000円以上の購入で送料無料（未満は¥980）</p>
+            <p class="text-[10px] font-bold text-gray-500 text-right">※10,000円以上の購入で送料無料（未満は¥1980）</p>
         </div>
 
         <div id="loading" class="text-center py-16 text-gray-600">
@@ -184,7 +184,7 @@
             });
             
             const isFree = subtotal >= 10000;
-            const shipping = isFree ? 0 : 980;
+            const shipping = isFree ? 0 : 1980;
             const total = subtotal + shipping;
 
             document.getElementById('subtotal-price').innerText = `¥${subtotal.toLocaleString()}`;
