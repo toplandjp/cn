@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TOPLAND | 公式ストア</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+
+        @media (max-width: 767px) {
+            .modal-animate { transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+            .modal-active .modal-animate { transform: translateY(0); }
+        }
+
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .glow-border {
+            position: relative;
+            border-radius: 1rem;
+            background: rgba(24, 24, 27, 0.6);
+            padding: 1px;
+            overflow: hidden;
+            z-index: 1;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+        }
+        .glow-border::before {
+            content: "";
+            position: absolute;
+            top: -150%; left: -150%;
+            width: 400%; height: 400%;
+            background: conic-gradient(from 0deg, transparent 0%, transparent 70%, #8b5cf6 85%, #ec4899 100%);
+            animation: spin 3.5s linear infinite;
+            opacity: 0.5;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+        .glow-border:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px -10px rgba(139, 92, 246, 0.4);
+        }
+        .glow-border:hover::before {
+            opacity: 1;
+            animation: spin 1.5s linear infinite;
+        }
+        .glow-inner {
+            background: #121214;
+            border-radius: 0.95rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
+
+        .glass-header {
+            background: rgba(9, 9, 11, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* 透過画像用のフワフワ弾むアニメーション */
+        @keyframes floatBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: floatBounce 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-[#09090b] bg-grid-pattern text-gray-200 antialiased font-sans selection:bg-violet-600 selection:text-white pb-20 md:pb-0 relative min-h-screen">
+    
+    <div class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_center,_var(--tw-gradient-stops))] from-violet-900/10 via-[#09090b] to-[#000000] pointer-events-none"></div>
+
+    <div class="bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-600 text-white text-xs md:text-sm font-black py-2.5 px-4 sticky top-0 z-50 flex justify-center items-center h-10 shadow-[0_0_20px_rgba(168,85,247,0.4)] bg-[length:200%_auto] animate-[pulseGlow_3s_infinite]">
+        <div class="flex items-center gap-2 tracking-widest drop-shadow-md">
+            <i class="fa-solid fa-truck-fast"></i>
+            <span>1万円以上の購入で送料無料!</span>
+        </div>
+    </div>
+
+    <div id="custom-toast" class="fixed top-14 left-1/2 -translate-x-1/2 bg-[#18181b] border border-gray-700 text-white px-6 py-3.5 rounded-xl text-sm font-black shadow-[0_15px_40px_rgba(0,0,0,0.8)] transition-all duration-300 opacity-0 -translate-y-6 pointer-events-none z-[120] flex items-center gap-3 w-[90%] max-w-sm justify-center">
+        <i id="toast-icon" class="fa-solid fa-circle-exclamation text-amber-400"></i> 
+        <span id="custom-toast-msg"></span>
+    </div>
+
+    <header class="glass-header sticky top-10 z-40 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between gap-4">
+            <a href="#" class="h-8 md:h-10 flex items-center shrink-0">
+                <img src="https://i.ibb.co/Rp7DBNxZ/topland.png" alt="TOPLAND" class="h-full w-auto object-contain filter invert opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+            </a>
+            
+            <div class="flex items-center gap-3 shrink-0 grow justify-end">
+                <a href="https://discord.gg/ZdDvVmg6d8" target="_blank" class="md:hidden bg-[#5865F2] text-white px-3.5 py-2 rounded-lg text-xs font-black transition-colors flex items-center gap-1.5 active:bg-[#4752C4] shadow-[0_0_12px_rgba(88,101,242,0.4)]">
+                    <i class="fa-brands fa-discord"></i><span>公式Discordに参加</span>
+                </a>
+
+                <div class="hidden md:flex items-center gap-3">
+                    <a href="sns/" class="h-10 px-4 text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2 bg-black/40 rounded-lg border border-white/10 hover:border-violet-500/50 shadow-inner">
+                        <i class="fa-solid fa-share-nodes"></i><span class="text-sm font-black">SNS</span>
+                    </a>
+                    <a href="cart/" class="relative h-10 px-4 text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2 bg-black/40 rounded-lg border border-white/10 hover:border-violet-500/50 shadow-inner group">
+                        <i class="fa-solid fa-bag-shopping group-hover:text-violet-400 transition-colors"></i><span class="text-sm font-black">カート</span>
+                        <span id="cart-count-pc" class="bg-violet-600 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5 shadow-[0_0_8px_rgba(168,85,247,0.8)]">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="px-4 pb-3 pt-2 md:hidden">
+            <div class="relative w-full">
+                <input type="text" id="search-input-mobile" placeholder="商品名、ブランドで検索..." class="w-full pl-10 pr-4 h-11 bg-[#121214] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/50 transition-all placeholder-gray-600 shadow-inner">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-500"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 relative z-10">
+        <aside class="w-56 shrink-0 z-30 hidden md:block">
+            <div class="bg-[#121214]/80 backdrop-blur-md rounded-xl border border-white/5 p-4 sticky top-40 flex flex-col gap-2 shadow-xl">
+                <div class="text-xs font-black text-gray-500 uppercase tracking-widest mb-1 px-1 flex items-center gap-2"><i class="fa-solid fa-tags text-violet-500"></i> Brands</div>
+                <button onclick="filterCategory('すべて', this)" class="w-full text-left px-3.5 h-10 rounded-lg text-sm font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white pc-cat-btn transition-all shadow-[0_0_12px_rgba(168,85,247,0.4)]">ALL</button>
+                <div id="pc-category-list" class="flex flex-col gap-1.5 mt-1"></div>
+            </div>
+        </aside>
+
+        <div class="md:hidden w-full bg-[#121214]/90 backdrop-blur-md rounded-xl border border-white/5 overflow-hidden mb-2 shadow-lg">
+            <button onclick="toggleMobileCategory()" class="w-full flex items-center justify-between px-4 h-14 text-sm font-black text-gray-300 active:bg-gray-800/50 transition-colors">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-tags text-violet-500"></i>ブランドから探す</span>
+                <i id="mobile-cat-arrow" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+            </button>
+            <div id="mobile-category-wrapper" class="hidden border-t border-white/5 p-3 bg-[#09090b]/80">
+                <div id="mobile-category-list" class="grid grid-cols-2 gap-2">
+                    <button onclick="filterCategory('すべて', this)" class="px-3 h-11 rounded-lg text-sm font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white mobile-cat-btn w-full text-left truncate shadow-[0_0_10px_rgba(168,85,247,0.3)]">ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <main class="grow">
+            <div class="mb-8 w-full group">
+                <a href="#" class="block overflow-hidden rounded-xl border border-gray-800 group-hover:border-violet-500/50 transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                    <img src="https://media.discordapp.net/attachments/1512776305563799655/1526555497354756297/quality_restoration_20260712110625753.png?ex=6a577318&is=6a562198&hm=63d41c42dc126648de9d2442206c8d3156f9b359981892c0bd04ff9a9ee00f9c&=&format=webp&quality=lossless" alt="Banner" class="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700">
+                </a>
+            </div>
+
+            <div id="loading" class="text-center py-20 text-gray-600">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-violet-600 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]"></i>
+                <div class="text-xs font-black tracking-widest uppercase text-violet-400/80">System Syncing...</div>
+            </div>
+            
+            <div id="product-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 hidden"></div>
+            
+            <div id="no-results" class="hidden text-center py-20 bg-[#121214] rounded-xl border border-white/5 mt-4 shadow-inner">
+                <i class="fa-solid fa-ghost text-4xl mb-3 text-gray-700"></i>
+                <div class="text-sm font-bold text-gray-400">データが見つかりませんでした</div>
+            </div>
+        </main>
+    </div>
+
+    <nav class="md:hidden fixed bottom-0 left-0 w-full glass-header z-40 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <div class="flex justify-around items-center h-16 px-2">
+            <a href="#" class="flex flex-col items-center justify-center w-full h-full text-violet-500 gap-1 transition-transform active:scale-95">
+                <i class="fa-solid fa-house text-xl drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]"></i>
+                <span class="text-[9px] font-black uppercase tracking-wider">Home</span>
+            </a>
+            <a href="sns/" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-gray-300 gap-1 transition-transform active:scale-95">
+                <i class="fa-solid fa-share-nodes text-xl"></i>
+                <span class="text-[9px] font-black uppercase tracking-wider">SNS</span>
+            </a>
+            <a href="cart/" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-gray-300 gap-1 relative transition-transform active:scale-95">
+                <i class="fa-solid fa-bag-shopping text-xl"></i>
+                <span class="text-[9px] font-black uppercase tracking-wider">Cart</span>
+                <span id="cart-count-mobile" class="bg-violet-600 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center absolute top-1 right-8 shadow-[0_0_8px_rgba(168,85,247,0.8)]">0</span>
+            </a>
+        </div>
+    </nav>
+
+    <div id="promo-popup" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none hidden" onclick="closePromoPopup()">
+        <div class="relative max-w-[90vw] md:max-w-xl bg-transparent rounded-2xl overflow-visible transition-transform duration-300" onclick="event.stopPropagation()">
+            <button onclick="closePromoPopup()" class="absolute -top-12 right-0 text-gray-400 hover:text-white text-2xl w-10 h-10 flex items-center justify-center bg-[#18181b] rounded-full border border-gray-700 transition-colors z-10 shadow-lg"><i class="fa-solid fa-xmark"></i></button>
+            <img src="https://i.ibb.co/r2jcpkNk/shipping.png" alt="Promo" class="w-full h-full object-contain rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+        </div>
+    </div>
+
+    <div id="product-modal" class="fixed inset-0 bg-black/90 z-[70] flex items-end md:items-center justify-center p-0 md:p-4 transition-opacity duration-300 opacity-0 pointer-events-none hidden" onclick="closeModal()">
+        <div class="modal-animate bg-[#09090b] border border-gray-800 w-full md:max-w-4xl rounded-t-[1.5rem] md:rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,1)] flex flex-col h-[85vh] md:h-auto md:max-h-[90vh] relative" onclick="event.stopPropagation()">
+            <div id="modal-scroll-body" class="grow overflow-y-auto p-4 md:p-8 pb-32">
+                <div id="modal-step-1" class="flex flex-col md:flex-row gap-6 md:gap-8">
+                    <div class="w-full md:w-1/2 flex flex-col shrink-0 relative justify-center">
+                        <div class="w-full aspect-square bg-transparent rounded-xl relative flex items-center justify-center p-4">
+                            <img id="modal-main-image" src="" class="w-full h-full object-contain animate-float drop-shadow-[0_15px_25px_rgba(168,85,247,0.4)]">
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-1/2 flex flex-col">
+                        <h2 id="modal-name" class="text-xl md:text-2xl font-black text-white leading-snug drop-shadow-md"></h2>
+                        <div class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500 tracking-tight border-b border-gray-800 pb-4 mt-3 mb-4">
+                            <span id="price-text" class="drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]">¥0</span>
+                        </div>
+                        <div class="bg-[#121214] p-5 rounded-2xl border border-white/5 shadow-inner">
+                            <p id="modal-description" class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed font-medium"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-step-2" class="hidden max-w-md mx-auto py-4 space-y-6 text-white">
+                    <div class="flex items-center gap-4 bg-[#121214] p-4 rounded-2xl border border-white/5 shadow-inner">
+                        <img id="modal-step2-mini-img" src="" class="w-16 h-16 object-contain bg-transparent rounded-xl drop-shadow-[0_5px_10px_rgba(168,85,247,0.3)]">
+                        <div>
+                            <h3 id="modal-step2-name" class="text-sm font-black text-gray-200 line-clamp-2 leading-tight"></h3>
+                            <div id="modal-step2-price" class="text-lg font-black text-violet-400 mt-1.5 drop-shadow-sm">¥0</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <span class="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-ruler text-violet-500"></i> Size</span>
+                        <div id="modal-size-container" class="flex flex-wrap gap-2.5"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <span class="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-layer-group text-violet-500"></i> Quantity</span>
+                        <div class="flex items-center gap-2 bg-[#121214] p-1.5 rounded-xl border border-white/5 w-max shadow-inner">
+                            <button onclick="changeModalQty(-1)" class="w-12 h-12 rounded-lg font-bold bg-[#18181b] text-gray-300 text-xl hover:bg-gray-800 hover:text-white transition-colors flex items-center justify-center cursor-pointer border border-transparent hover:border-gray-700 shadow-sm">-</button>
+                            <div id="modal-qty-display" class="w-14 h-12 flex items-center justify-center font-black text-xl text-white">1</div>
+                            <button onclick="changeModalQty(1)" class="w-12 h-12 rounded-lg font-bold bg-[#18181b] text-gray-300 text-xl hover:bg-gray-800 hover:text-white transition-colors flex items-center justify-center cursor-pointer border border-transparent hover:border-gray-700 shadow-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="absolute bottom-0 left-0 right-0 bg-[#09090b]/95 backdrop-blur-xl p-4 border-t border-white/5 flex gap-3 z-30 shadow-[0_-15px_30px_rgba(0,0,0,0.8)]">
+                <button id="modal-left-btn" onclick="handleModalLeftAction()" class="w-1/3 bg-[#18181b] border border-gray-700 text-gray-300 hover:text-white font-bold h-14 rounded-xl text-sm active:bg-gray-800 transition-colors cursor-pointer shadow-inner">閉じる</button>
+                <button id="modal-right-btn" onclick="handleModalRightAction()" class="w-2/3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] text-white font-bold h-14 rounded-xl flex items-center justify-center gap-2 text-sm transition-all cursor-pointer active:scale-95">サイズ・数量を選ぶ <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1YwGSjOtNAsKnxCg6afUv2nZPG0h6d7VyFat1ai3w07A';
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:loadData`;
+        let products = []; let currentCategory = 'すべて'; let searchQuery = ''; let activeProduct = null; let selectedSize = ''; let currentStep = 1;
+        let currentQty = 1;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const script = document.createElement('script'); script.src = url; document.body.appendChild(script);
+            document.getElementById('search-input-mobile').addEventListener('input', (e) => { searchQuery = e.target.value; renderProducts(); });
+            syncCartCount(); showPromoPopup();
+        });
+
+        function showCustomToast(msg, type = 'error') {
+            const toast = document.getElementById('custom-toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('custom-toast-msg').innerText = msg;
+            icon.className = type === 'success' ? 'fa-solid fa-circle-check text-emerald-400 text-lg' : 'fa-solid fa-circle-exclamation text-amber-400 text-lg';
+            toast.classList.remove('opacity-0', '-translate-y-6', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => { toast.classList.remove('opacity-100', 'translate-y-0'); toast.classList.add('opacity-0', '-translate-y-6', 'pointer-events-none'); }, 3000);
+        }
+
+        function showPromoPopup() {
+            const popup = document.getElementById('promo-popup'); const lastShown = localStorage.getItem('topland_promo_last_shown'); const now = Date.now();
+            if (lastShown && (now - parseInt(lastShown, 10) < 1800000)) return; 
+            popup.classList.remove('hidden');
+            setTimeout(() => { popup.classList.remove('opacity-0', 'pointer-events-none'); popup.classList.add('opacity-100'); localStorage.setItem('topland_promo_last_shown', String(now)); }, 50);
+        }
+        function closePromoPopup() { const popup = document.getElementById('promo-popup'); popup.classList.remove('opacity-100'); popup.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => popup.classList.add('hidden'), 300); }
+
+        function toggleMobileCategory() {
+            const wrapper = document.getElementById('mobile-category-wrapper'); const arrow = document.getElementById('mobile-cat-arrow');
+            if (wrapper.classList.contains('hidden')) { wrapper.classList.remove('hidden'); arrow.classList.add('rotate-180'); } 
+            else { wrapper.classList.add('hidden'); arrow.classList.remove('rotate-180'); }
+        }
+
+        function loadData(data) {
+            try {
+                const rows = data.table.rows; products = [];
+                const getVal = (cell) => cell ? (cell.v !== null ? String(cell.v).trim() : '') : '';
+                rows.forEach(row => {
+                    if (!row || !row.c) return;
+                    const id = getVal(row.c[0]); const name = getVal(row.c[1]); const category = getVal(row.c[2]); const imgStr = getVal(row.c[3]); const price = getVal(row.c[4]); const desc = getVal(row.c[5]); const sizeStr = getVal(row.c[6]); const status = getVal(row.c[7]) || '非公開';
+                    if (name && name !== 'name' && status !== '非公開') {
+                        products.push({ id, name, category, images: imgStr.split(',').map(s=>s.trim()).filter(Boolean), price, description: desc, sizes: sizeStr ? sizeStr.split(',').map(s=>s.trim()).filter(Boolean) : [], status });
+                    }
+                });
+                document.getElementById('loading').classList.add('hidden'); document.getElementById('product-grid').classList.remove('hidden');
+                initCategories(); renderProducts(); syncCartCount();
+            } catch (e) { document.getElementById('loading').innerHTML = 'エラーが発生しました'; }
+        }
+
+        function syncCartCount() { 
+            const cart = JSON.parse(localStorage.getItem('topland_cart_data')) || []; 
+            const count = cart.reduce((sum, item) => sum + item.qty, 0); 
+            document.getElementById('cart-count-pc').innerText = count; document.getElementById('cart-count-mobile').innerText = count; 
+        }
+
+        function cleanText(str) { return String(str).toLowerCase().replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).trim(); }
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid'); const noResults = document.getElementById('no-results'); grid.innerHTML = '';
+            const words = cleanText(searchQuery).split(/\s+/).filter(w => w);
+            const filtered = products.filter(product => {
+                const matchesCategory = (currentCategory === 'すべて' || product.category === currentCategory); if (!matchesCategory) return false;
+                const targetText = cleanText(`${product.name} ${product.category} ${product.id}`); return words.every(word => targetText.includes(word));
+            });
+            if (filtered.length === 0) { noResults.classList.remove('hidden'); return; }
+            noResults.classList.add('hidden');
+            
+            filtered.forEach(product => {
+                const card = document.createElement('div'); 
+                card.className = "glow-border group cursor-pointer"; 
+                card.onclick = () => openModal(product);
+                let statusBadge = product.status === '生産中・準備中' ? `<span class="absolute top-2 left-2 z-20 bg-rose-600 text-white text-[10px] font-black px-2 py-1 rounded shadow border border-rose-400/50">準備中</span>` : '';
+                
+                // 画像エリアを透過(bg-transparent)にし、ドロップシャドウとフロートを適用
+                card.innerHTML = `
+                    <div class="glow-inner">
+                        <div class="aspect-square bg-transparent relative flex items-center justify-center p-4 border-b border-gray-800 overflow-hidden">
+                            ${statusBadge}
+                            <img src="${product.images[0] || 'https://placehold.co/400'}" class="w-full h-full object-contain animate-float drop-shadow-[0_10px_15px_rgba(168,85,247,0.4)] group-hover:scale-110 transition-transform duration-500 relative z-10">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        </div>
+                        <div class="p-3.5 flex flex-col grow justify-between relative z-10">
+                            <div>
+                                <span class="text-[9px] font-black text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded uppercase tracking-widest block w-fit mb-1.5">${product.category}</span>
+                                <h2 class="text-xs font-bold text-gray-200 line-clamp-2 leading-snug group-hover:text-white transition-colors">${product.name}</h2>
+                            </div>
+                            <div class="mt-4 flex items-center justify-between">
+                                <span class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-400 group-hover:from-white group-hover:to-violet-200 transition-colors">${product.price}</span>
+                                <div class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-violet-600 group-hover:text-white transition-colors shadow-inner"><i class="fa-solid fa-arrow-right -rotate-45 text-[10px]"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function initCategories() {
+            const pcList = document.getElementById('pc-category-list'); const mobList = document.getElementById('mobile-category-list');
+            pcList.innerHTML = ''; mobList.innerHTML = '';
+            
+            const mbAll = document.createElement('button'); mbAll.innerText = 'ALL';
+            mbAll.className = "px-3 h-11 rounded-lg text-sm font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white mobile-cat-btn w-full text-left truncate shadow-[0_0_12px_rgba(168,85,247,0.4)]";
+            mbAll.onclick = () => { filterCategory('すべて', mbAll); toggleMobileCategory(); }; mobList.appendChild(mbAll);
+
+            const cats = [...new Set(products.map(p => p.category))].filter(Boolean);
+            cats.forEach(c => {
+                const pb = document.createElement('button'); pb.innerText = c;
+                pb.className = "w-full text-left px-3.5 h-10 rounded-lg text-sm font-medium text-gray-400 bg-black/30 hover:bg-black/60 hover:text-white pc-cat-btn transition-colors";
+                pb.onclick = () => filterCategory(c, pb); pcList.appendChild(pb);
+                
+                const mb = document.createElement('button'); mb.innerText = c;
+                mb.className = "px-3 h-11 rounded-lg text-sm font-medium text-gray-300 bg-[#121214] border border-white/5 mobile-cat-btn w-full text-left truncate active:scale-95 transition-transform";
+                mb.onclick = () => { filterCategory(c, mb); toggleMobileCategory(); }; mobList.appendChild(mb);
+            });
+        }
+
+        function filterCategory(category, element) {
+            currentCategory = category; 
+            document.querySelectorAll('.pc-cat-btn').forEach(btn => { 
+                btn.className = "w-full text-left px-3.5 h-10 rounded-lg text-sm font-medium text-gray-400 bg-black/30 hover:bg-black/60 hover:text-white pc-cat-btn transition-colors"; 
+            });
+            document.querySelectorAll('.mobile-cat-btn').forEach(btn => {
+                btn.className = "px-3 h-11 rounded-lg text-sm font-medium text-gray-300 bg-[#121214] border border-white/5 mobile-cat-btn w-full text-left truncate active:scale-95 transition-transform";
+            });
+            
+            if(element.classList.contains('pc-cat-btn')) { 
+                element.className = "w-full text-left px-3.5 h-10 rounded-lg text-sm font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white pc-cat-btn transition-colors shadow-[0_0_12px_rgba(168,85,247,0.4)]"; 
+            } else { 
+                element.className = "px-3 h-11 rounded-lg text-sm font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white mobile-cat-btn w-full text-left truncate shadow-[0_0_12px_rgba(168,85,247,0.4)]"; 
+            }
+            renderProducts();
+        }
+
+        function openModal(product) {
+            activeProduct = product; 
+            selectedSize = ''; 
+            currentQty = 1; 
+            document.getElementById('modal-qty-display').textContent = currentQty; 
+            
+            // 1枚画像の設定
+            document.getElementById('modal-main-image').src = product.images[0] || 'https://placehold.co/400';
+            document.getElementById('modal-step2-mini-img').src = product.images[0] || 'https://placehold.co/400'; 
+            
+            let nameHtml = `<span class="text-[10px] font-black tracking-widest text-violet-400 bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 rounded uppercase inline-block mr-2 align-middle">${product.category}</span>`;
+            if (product.status === '生産中・準備中') nameHtml += `<span class="text-[10px] font-black tracking-wider text-rose-300 bg-rose-900/50 border border-rose-500/50 px-2 py-0.5 rounded inline-block mr-2 align-middle">準備中</span>`;
+            nameHtml += `<span class="align-middle text-white font-black">${product.name}</span>`; 
+            
+            document.getElementById('modal-name').innerHTML = nameHtml; 
+            document.getElementById('price-text').innerText = product.price; 
+            document.getElementById('modal-description').innerText = product.description;
+            document.getElementById('modal-step2-name').innerText = product.name; 
+            document.getElementById('modal-step2-price').innerText = product.price;
+            
+            const sizeContainer = document.getElementById('modal-size-container'); sizeContainer.innerHTML = '';
+            if (product.sizes.length === 0) { 
+                sizeContainer.innerHTML = `<span class="text-sm font-bold text-gray-300 bg-[#18181b] px-4 py-2.5 rounded-xl border border-gray-700 shadow-inner">FREE</span>`; 
+                selectedSize = 'FREE'; 
+            } else { 
+                product.sizes.forEach(size => { 
+                    const btn = document.createElement('button'); btn.innerText = size; 
+                    btn.className = "min-w-[56px] h-12 px-4 border border-gray-700 text-sm font-bold rounded-xl bg-[#18181b] text-gray-300 hover:bg-gray-800 transition-all shadow-inner active:scale-95"; 
+                    btn.onclick = () => { 
+                        sizeContainer.querySelectorAll('button').forEach(b => b.className = "min-w-[56px] h-12 px-4 border border-gray-700 text-sm font-bold rounded-xl bg-[#18181b] text-gray-300 hover:bg-gray-800 transition-all shadow-inner active:scale-95"); 
+                        btn.className = "min-w-[56px] h-12 px-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 border-transparent text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(168,85,247,0.5)] scale-105"; 
+                        selectedSize = size; 
+                    }; 
+                    sizeContainer.appendChild(btn); 
+                }); 
+            }
+            goToStep(1); 
+            const modalEl = document.getElementById('product-modal'); 
+            modalEl.classList.remove('hidden');
+            setTimeout(() => { modalEl.classList.remove('opacity-0', 'pointer-events-none'); modalEl.classList.add('modal-active', 'opacity-100'); }, 10); 
+            document.body.style.overflow = 'hidden';
+        }
+
+        function goToStep(step) {
+            currentStep = step; 
+            const step1 = document.getElementById('modal-step-1'); 
+            const step2 = document.getElementById('modal-step-2'); 
+            const btnL = document.getElementById('modal-left-btn'); 
+            const btnR = document.getElementById('modal-right-btn');
+            
+            btnR.disabled = false;
+            
+            if (activeProduct && activeProduct.status === '生産中・準備中') { 
+                btnR.innerHTML = `<i class="fa-solid fa-lock text-sm"></i> 準備中`; 
+                btnR.disabled = true; 
+                btnR.className = "w-2/3 bg-[#18181b] border border-gray-700 text-gray-500 font-bold h-14 rounded-xl flex items-center justify-center gap-2 pointer-events-none text-sm"; 
+                btnL.innerHTML = '閉じる'; step1.classList.remove('hidden'); step2.classList.add('hidden'); return; 
+            }
+            if (step === 1) { 
+                step1.classList.remove('hidden'); step2.classList.add('hidden'); 
+                btnL.innerHTML = '閉じる'; btnR.innerHTML = `サイズ・数量を選ぶ <i class="fa-solid fa-chevron-right text-[10px]"></i>`; 
+                btnR.className = "w-2/3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] text-white font-bold h-14 rounded-xl flex items-center justify-center gap-2 text-sm transition-all cursor-pointer active:scale-95"; 
+            } else { 
+                step1.classList.add('hidden'); step2.classList.remove('hidden'); 
+                btnL.innerHTML = '戻る'; btnR.innerHTML = `<i class="fa-solid fa-cart-plus text-lg"></i> カートに追加する`; 
+                btnR.className = "w-2/3 bg-white hover:bg-gray-200 text-black font-black h-14 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors cursor-pointer active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)]"; 
+            }
+        }
+
+        function handleModalLeftAction() { if (currentStep === 1) closeModal(); else goToStep(1); }
+        function handleModalRightAction() { if (currentStep === 1) goToStep(2); else addToCart(); }
+        
+        function changeModalQty(val) { 
+            currentQty = Math.max(1, currentQty + val);
+            document.getElementById('modal-qty-display').textContent = currentQty; 
+        }
+        
+        function closeModal() { 
+            const modalEl = document.getElementById('product-modal'); 
+            modalEl.classList.remove('modal-active', 'opacity-100'); 
+            modalEl.classList.add('opacity-0', 'pointer-events-none'); 
+            setTimeout(() => { modalEl.classList.add('hidden'); }, 300); 
+            document.body.style.overflow = ''; 
+        }
+
+        function addToCart() {
+            if (!selectedSize) { showCustomToast('サイズを選択してください', 'error'); return; }
+            const btn = document.getElementById('modal-right-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> 追加しました';
+            btn.disabled = true;
+            
+            const qty = currentQty;
+            let cart = JSON.parse(localStorage.getItem('topland_cart_data')) || [];
+            const existing = cart.find(i => i.id === activeProduct.id && i.size === selectedSize);
+            if (existing) existing.qty += qty; else cart.push({ id: activeProduct.id, size: selectedSize, qty: qty });
+            
+            localStorage.setItem('topland_cart_data', JSON.stringify(cart));
+            syncCartCount(); showCustomToast('カートに追加しました', 'success'); 
+            setTimeout(() => { 
+                closeModal(); 
+                setTimeout(() => { 
+                    btn.innerHTML = originalHTML; 
+                    btn.disabled = false;
+                    goToStep(1); 
+                }, 300); 
+            }, 500);
+        }
+    </script>
+</body>
+</html>
