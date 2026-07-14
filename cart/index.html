@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>カート - TOPLAND</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-[#09090b] bg-grid-pattern text-gray-200 antialiased font-sans pb-safe min-h-screen relative">
+
+    <div class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_center,_var(--tw-gradient-stops))] from-violet-900/10 via-[#09090b] to-[#000000] pointer-events-none"></div>
+
+    <header class="bg-[#09090b]/80 border-b border-gray-800 sticky top-0 z-40 backdrop-blur-xl h-14 flex items-center justify-between px-4 shadow-lg">
+        <a href="../" class="w-10 h-10 flex items-center justify-start text-gray-400 hover:text-white transition-colors active:scale-95">
+            <i class="fa-solid fa-chevron-left text-lg"></i>
+        </a>
+        <h1 class="text-sm font-black text-white tracking-widest uppercase">Cart</h1>
+        <div class="w-10"></div>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4 space-y-4 pb-10">
+        
+        <div class="bg-[#121214] p-4 rounded-xl border border-white/5 space-y-3 shadow-lg">
+            <div class="flex justify-between items-end">
+                <span id="shipping-status-text" class="text-xs font-bold text-gray-300">計算中...</span>
+            </div>
+            <div class="w-full bg-[#09090b] h-2.5 rounded-full overflow-hidden border border-gray-800 shadow-inner">
+                <div id="shipping-progress-bar" class="bg-gradient-to-r from-violet-500 to-fuchsia-500 h-full w-0 transition-all duration-700 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+            </div>
+            <p class="text-[10px] font-bold text-gray-500 text-right">※10,000円以上の購入で送料無料（未満は¥980）</p>
+        </div>
+
+        <div id="loading" class="text-center py-16 text-gray-600">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-violet-600 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]"></i>
+            <p class="text-xs font-bold tracking-widest uppercase text-violet-400/80">Syncing Data...</p>
+        </div>
+        
+        <div id="cart-list" class="space-y-3"></div>
+
+        <div id="summary-section" class="bg-[#121214] p-5 rounded-xl border border-white/5 space-y-5 hidden shadow-lg">
+            <div class="space-y-2 text-sm font-medium text-gray-400">
+                <div class="flex justify-between"><span>小計</span><span id="subtotal-price" class="font-bold text-gray-200">¥0</span></div>
+                <div class="flex justify-between border-b border-gray-800 pb-3"><span>送料</span><span id="shipping-fee" class="font-bold text-gray-200">¥0</span></div>
+                <div class="flex justify-between pt-1 items-end">
+                    <span class="font-black text-gray-200">合計 (税込)</span>
+                    <span id="total-price" class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300 tracking-tight">¥0</span>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-5 space-y-4">
+                <div class="bg-[#5865F2]/10 border border-[#5865F2]/30 text-[#5865F2] rounded-lg p-3.5 text-xs font-bold flex gap-2.5 items-start leading-relaxed shadow-inner">
+                    <i class="fa-solid fa-circle-info mt-0.5 text-sm"></i>
+                    <p>Discordで注文を確定します。下のコードをコピーして専用チャンネルに貼り付けてください。</p>
+                </div>
+                
+                <div class="flex flex-col gap-2.5">
+                    <div class="flex gap-2 h-12">
+                        <input type="text" id="order-string-input" readonly class="bg-[#09090b] border border-gray-700 rounded-lg px-3 text-xs font-mono grow text-gray-300 focus:outline-none shadow-inner">
+                        <button onclick="copyOrder()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 rounded-lg text-xs font-black shrink-0 flex items-center justify-center gap-1.5 transition-colors border border-gray-600 shadow-md active:scale-95">
+                            <i class="fa-regular fa-copy"></i> コピー
+                        </button>
+                    </div>
+                    <a href="https://discord.gg/ZdDvVmg6d8" target="_blank" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-black h-12 rounded-lg flex items-center justify-center gap-2 transition-all text-sm shadow-[0_0_15px_rgba(88,101,242,0.4)] active:scale-95">
+                        <i class="fa-brands fa-discord text-lg"></i> Discordを開く
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 bg-[#18181b] border border-gray-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-[0_15px_40px_rgba(0,0,0,0.8)] transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none z-50 flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i> <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1YwGSjOtNAsKnxCg6afUv2nZPG0h6d7VyFat1ai3w07A';
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:loadData`;
+        let dbProducts = []; 
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const script = document.createElement('script'); script.src = url; document.body.appendChild(script);
+        });
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast'); 
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').innerText = msg;
+            icon.className = type === 'success' ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-circle-exclamation text-amber-400';
+            
+            t.classList.remove('opacity-0', '-translate-y-4'); t.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => { t.classList.remove('opacity-100', 'translate-y-0'); t.classList.add('opacity-0', '-translate-y-4'); }, 3000);
+        }
+
+        function loadData(data) {
+            const rows = data.table.rows;
+            rows.forEach(row => {
+                if(!row || !row.c) return;
+                const id = row.c[0] ? String(row.c[0].v).trim() : '';
+                const name = row.c[1] ? String(row.c[1].v).trim() : '';
+                const img = row.c[3] ? String(row.c[3].v).split(',')[0].trim() : 'https://placehold.co/400';
+                const priceStr = row.c[4] ? String(row.c[4].v) : '0';
+                const status = row.c[7] ? String(row.c[7].v).trim() : '非公開';
+                if(id) dbProducts.push({ id, name, img, priceStr, priceNum: parseInt(priceStr.replace(/[^\d]/g, '')||0), status });
+            });
+            renderCart();
+        }
+
+        function renderCart() {
+            document.getElementById('loading').classList.add('hidden');
+            let cart = [];
+            try { cart = JSON.parse(localStorage.getItem('topland_cart_data')) || []; } catch(e) { cart = []; }
+            const container = document.getElementById('cart-list'); container.innerHTML = '';
+            
+            let validCart = [];
+            cart.forEach(item => {
+                const dbItem = dbProducts.find(p => p.id === item.id);
+                if(dbItem && dbItem.status !== '非公開' && dbItem.status !== '生産中・準備中') {
+                    validCart.push(item);
+                }
+            });
+
+            if(cart.length !== validCart.length) {
+                localStorage.setItem('topland_cart_data', JSON.stringify(validCart));
+                cart = validCart;
+                showToast('販売終了・準備中の商品が自動的に削除されました', 'error');
+            }
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-24 bg-[#121214] rounded-xl border border-white/5 flex flex-col items-center shadow-inner">
+                        <i class="fa-solid fa-basket-shopping text-5xl text-gray-700 mb-5"></i>
+                        <h2 class="text-sm font-bold text-gray-400">カートは空です</h2>
+                        <a href="../" class="mt-5 text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3 rounded-lg shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all active:scale-95">お買い物を続ける</a>
+                    </div>`;
+                document.getElementById('summary-section').classList.add('hidden');
+                document.getElementById('shipping-status-text').innerText = 'カートが空です';
+                document.getElementById('shipping-progress-bar').style.width = '0%';
+                return;
+            }
+
+            document.getElementById('summary-section').classList.remove('hidden');
+
+            let subtotal = 0; let orderTokens = [];
+            
+            cart.forEach((item, index) => {
+                const dbItem = dbProducts.find(p => p.id === item.id);
+                subtotal += (dbItem.priceNum * item.qty);
+                orderTokens.push(`[${item.id}]_${item.size}x${item.qty}`);
+
+                const div = document.createElement('div');
+                div.className = "flex gap-3 bg-[#121214] p-3.5 rounded-xl border border-white/5 relative shadow-md";
+                
+                // カート画面の画像にも透過・ドロップシャドウを適用
+                div.innerHTML = `
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-transparent rounded-lg overflow-hidden shrink-0 flex items-center justify-center p-1 border border-gray-800 shadow-inner">
+                        <img src="${dbItem.img}" class="w-full h-full object-contain drop-shadow-[0_5px_10px_rgba(168,85,247,0.3)]">
+                    </div>
+                    <div class="grow flex flex-col justify-between py-0.5 min-w-0 pr-5">
+                        <h4 class="text-xs md:text-sm font-bold text-gray-200 line-clamp-1 leading-tight">${dbItem.name}</h4>
+                        
+                        <div class="flex items-center justify-between mt-auto pt-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-gray-400 bg-[#09090b] px-2 py-1 rounded border border-gray-800 shadow-inner">Size: ${item.size}</span>
+                                <div class="flex items-center border border-gray-700 rounded bg-[#18181b] h-6 shadow-sm overflow-hidden">
+                                    <button onclick="changeQty(${index}, -1)" class="w-6 h-full text-gray-400 font-bold hover:text-white hover:bg-gray-700 text-sm flex items-center justify-center transition-colors">-</button>
+                                    <span class="w-5 text-center text-[11px] font-black text-gray-200 flex items-center justify-center bg-[#09090b] border-x border-gray-700 h-full">${item.qty}</span>
+                                    <button onclick="changeQty(${index}, 1)" class="w-6 h-full text-gray-400 font-bold hover:text-white hover:bg-gray-700 text-sm flex items-center justify-center transition-colors">+</button>
+                                </div>
+                            </div>
+                            <span class="text-sm font-black text-white shrink-0 ml-1">${dbItem.priceStr}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeItem(${index})" class="absolute top-2.5 right-2.5 text-gray-600 hover:text-rose-500 p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
+                `;
+                container.appendChild(div);
+            });
+            
+            const isFree = subtotal >= 10000;
+            const shipping = isFree ? 0 : 980;
+            const total = subtotal + shipping;
+
+            document.getElementById('subtotal-price').innerText = `¥${subtotal.toLocaleString()}`;
+            document.getElementById('shipping-fee').innerText = isFree ? "無料" : `¥${shipping.toLocaleString()}`;
+            document.getElementById('total-price').innerText = `¥${total.toLocaleString()}`;
+            
+            document.getElementById('shipping-progress-bar').style.width = `${Math.min((subtotal/10000)*100, 100)}%`;
+            const sText = document.getElementById('shipping-status-text');
+            if(isFree) {
+                sText.innerHTML = `<span class="text-violet-400"><i class="fa-solid fa-check-circle"></i> 送料無料が適用されました</span>`;
+            } else {
+                sText.innerHTML = `送料無料まであと <span class="text-gray-400 font-black">¥${(10000 - subtotal).toLocaleString()}</span>`;
+            }
+
+            document.getElementById('order-string-input').value = `ORDER//${orderTokens.join('//')}`;
+        }
+
+        function changeQty(idx, val) {
+            let cart = JSON.parse(localStorage.getItem('topland_cart_data'));
+            cart[idx].qty += val;
+            if(cart[idx].qty < 1) cart.splice(idx, 1);
+            localStorage.setItem('topland_cart_data', JSON.stringify(cart));
+            renderCart();
+        }
+
+        function removeItem(idx) {
+            let cart = JSON.parse(localStorage.getItem('topland_cart_data'));
+            cart.splice(idx, 1);
+            localStorage.setItem('topland_cart_data', JSON.stringify(cart));
+            renderCart(); showToast('商品を削除しました', 'error');
+        }
+
+        function copyOrder() {
+            const input = document.getElementById('order-string-input');
+            input.select(); document.execCommand('copy');
+            showToast('注文コードをコピーしました！', 'success');
+        }
+    </script>
+</body>
+</html>
